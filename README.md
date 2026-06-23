@@ -4,7 +4,7 @@ This repository contains the implementation of the AI-driven framework proposed 
 
 ---
 
-## 📖 Overview
+##  Overview
 The rapid growth of digital financial services has created a strong need for real-time, explainable, and adaptive fraud detection systems This project addresses these challenges by combining an offline machine learning training pipeline with a live FastAPI inference service and interactive monitoring dashboards
 
 Unlike static, rule-based engines, this architecture evaluates transactions using multiple aggregated risk signals and leverages a local Large Language Model (LLM) to deliver clear, auditable reasoning for its operational actions
