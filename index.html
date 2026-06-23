@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic System Operational Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            background-color: #0f172a; 
+            color: #cbd5e1; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-size: 0.85rem; 
+        }
+        .zone-card { 
+            background: #1e293b; 
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        /* Zone Border Colors */
+        .border-z1 { border-top: 4px solid #f97316; } /* Orange */
+        .border-z2 { border-top: 4px solid #10b981; } /* Emerald */
+        .border-z3 { border-top: 4px solid #f97316; } /* Orange */
+        .border-z4 { border-top: 4px solid #8b5cf6; } /* Purple */
+        .border-z5 { border-top: 4px solid #10b981; } /* Emerald */
+        .border-z6 { border-top: 4px solid #ef4444; } /* Red */
+        
+        .metric-title { font-weight: 600; color: #f8fafc; margin-bottom: 2px; }
+        .metric-value { font-family: monospace; color: #38bdf8; font-size: 1rem; }
+        canvas { max-height: 100px; width: 100%; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="p-4 h-screen flex flex-col">
+
+    <header class="mb-4 flex justify-between items-center pb-2 border-b border-slate-700">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Dashboard design — monitoring panels for the complete agentic system</h1>
+            <p class="text-slate-400 text-xs italic mt-1">The operational dashboard has 6 monitoring zones. Each zone corresponds to one loop in the agentic system.</p>
+        </div>
+        <div>
+            <button onclick="toggleSimulation()" id="sim-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded font-bold transition text-sm">Start Live Feed</button>
+            <button onclick="injectFraudAttack()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded font-bold transition text-sm ml-2">Inject Fraud 🚨</button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow overflow-auto scrollbar-hide">
+        
+        <div class="zone-card border-z1">
+            <h2 class="text-sm font-bold text-white bg-orange-600/20 px-2 py-1 rounded">Zone 1 - Cluster Health</h2>
+            <div><span class="metric-title">• ARIMA multiplier per cluster:</span> <span class="metric-value">C0:x1.2 | C1:x1.0 | C2:x0.85</span></div>
+            <div>
+                <span class="metric-title">• Weekly Gap trend sparkline (last 8 weeks):</span>
+                <canvas id="gapSparkline"></canvas>
+            </div>
+            <div><span class="metric-title">• Drift status:</span> <span id="z1-drift" class="metric-value text-emerald-400">STABLE</span></div>
+            <div><span class="metric-title">• Last retrain timestamp:</span> <span id="z1-retrain" class="metric-value text-xs">Waiting...</span></div>
+        </div>
+
+        <div class="zone-card border-z2">
+            <h2 class="text-sm font-bold text-white bg-emerald-600/20 px-2 py-1 rounded">Zone 2 - Live Scoring Feed</h2>
+            <div><span class="metric-title">• Real-time score stream (Latest):</span> <span id="z2-score" class="metric-value text-xl">0.00</span></div>
+            <div>
+                <span class="metric-title">• Score distribution histogram by class:</span>
+                <canvas id="scoreHistogram"></canvas>
+            </div>
+            <div><span class="metric-title">• % of scores in each band:</span> <span id="z2-bands" class="metric-value text-xs"><0.10: 0% | 0.10-0.35: 0% | >0.35: 0%</span></div>
+            <div><span class="metric-title">• RAG augmentation rate:</span> <span id="z2-rag" class="metric-value">0%</span></div>
+        </div>
+
+        <div class="zone-card border-z3">
+            <h2 class="text-sm font-bold text-white bg-orange-600/20 px-2 py-1 rounded">Zone 3 - Action Dispatch</h2>
+            <div>
+                <span class="metric-title">• Actions triggered in last 24h by type:</span>
+                <canvas id="actionBars"></canvas>
+            </div>
+            <div><span class="metric-title">• Human review queue size:</span> <span id="z3-queue" class="metric-value text-yellow-400">0 pending</span></div>
+            <div><span class="metric-title">• Autonomous vs Manual rate:</span> <span id="z3-auto" class="metric-value">100% Auto</span></div>
+        </div>
+
+        <div class="zone-card border-z4">
+            <h2 class="text-sm font-bold text-white bg-purple-600/20 px-2 py-1 rounded">Zone 4 - SHAP Reliability</h2>
+            <div><span class="metric-title">• Cosine similarity (Latest):</span> <span id="z4-cos" class="metric-value">0.00</span></div>
+            <div><span class="metric-title">• % of customers with cos < 0.85 (uncertain):</span> <span id="z4-uncertain" class="metric-value text-red-400">0%</span></div>
+            <div><span class="metric-title">• Dominant SHAP feature distribution:</span> <span class="metric-value text-xs">amt: 45%, lat: 20%, long: 35%</span></div>
+            <div><span class="metric-title">• SHAP vector cluster mean vs last-week:</span> <span class="metric-value text-emerald-400">Aligned (Dev < 2%)</span></div>
+        </div>
+
+        <div class="zone-card border-z5">
+            <h2 class="text-sm font-bold text-white bg-emerald-600/20 px-2 py-1 rounded">Zone 5 - Outcome Tracking</h2>
+            <div><span class="metric-title">• Outcome log rate:</span> <span class="metric-value">99.8% (Synced)</span></div>
+            <div><span class="metric-title">• Response rate by action type:</span> <span class="metric-value text-xs">OTP: 85%, Review: 100%</span></div>
+            <div><span class="metric-title">• RAG index size:</span> <span id="z5-rag-size" class="metric-value">10,000 vectors</span></div>
+            <div>
+                <span class="metric-title">• Model AUC trend since last 3 retrains:</span>
+                <canvas id="aucTrend"></canvas>
+            </div>
+        </div>
+
+        <div class="zone-card border-z6">
+            <h2 class="text-sm font-bold text-white bg-red-600/20 px-2 py-1 rounded">Zone 6 - System Alerts</h2>
+            <div><span class="metric-title">• Active drift alerts:</span> <span id="z6-alert" class="metric-value text-emerald-400">None</span></div>
+            <div><span class="metric-title">• API response time P95:</span> <span id="z6-latency" class="metric-value">0 ms</span></div>
+            <div><span class="metric-title">• SHAP computation queue depth:</span> <span id="z6-shap-queue" class="metric-value">0 items</span></div>
+            <div><span class="metric-title">• Retrain job status:</span> <span id="z6-job" class="metric-value text-emerald-400">DONE</span></div>
+        </div>
+
+    </div>
+
+    <div class="mt-4 border-t border-slate-700 pt-3 flex flex-wrap gap-4 text-xs text-slate-400 bg-slate-800 p-2 rounded">
+        <div class="flex-1 border-r border-slate-600 pr-2"><b>Backend:</b> FastAPI + Python. Async scoring.</div>
+        <div class="flex-1 border-r border-slate-600 pr-2"><b>ML layer:</b> scikit-learn (SVM), shap, faiss-cpu.</div>
+        <div class="flex-1 border-r border-slate-600 pr-2"><b>Database:</b> In-memory state (Simulating PostgreSQL/Redis).</div>
+        <div class="flex-1"><b>Dashboard:</b> HTML/JS connects to FastAPI. Auto-refresh.</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // Chart.js Initialization & Configuration
+        // ==========================================
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.size = 9;
+
+        // Zone 1: Gap Trend Line Chart
+        const gapHistory = [0.8, 0.75, 0.82, 0.7, 0.65, 0.68, 0.6, 0.55]; 
+        const ctxGap = document.getElementById('gapSparkline').getContext('2d');
+        const gapChart = new Chart(ctxGap, {
+            type: 'line', 
+            data: { 
+                labels: ['W1','W2','W3','W4','W5','W6','W7','W8'], 
+                datasets: [{ 
+                    data: gapHistory, 
+                    borderColor: '#f97316', 
+                    borderWidth: 2, 
+                    pointRadius: 0, 
+                    tension: 0.3 
+                }] 
+            },
+            options: { 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { display: false }, y: { display: false } } 
+            }
+        });
+
+        // Zone 2: Score Distribution Histogram
+        const bands = { low: 0, mid: 0, high: 0 };
+        const ctxHist = document.getElementById('scoreHistogram').getContext('2d');
+        const histChart = new Chart(ctxHist, {
+            type: 'bar', 
+            data: { 
+                labels: ['<0.10', '0.10-0.35', '>0.35'], 
+                datasets: [{ data: [0,0,0], backgroundColor: '#10b981' }] 
+            },
+            options: { 
+                plugins: { legend: { display: false } }, 
+                scales: { y: { display: false } } 
+            }
+        });
+
+        // Zone 3: Actions Dispatched Bar Chart
+        const actions = { "BLOCK": 0, "APPROVE": 0, "REVIEW": 0, "OTP": 0 };
+        const ctxAct = document.getElementById('actionBars').getContext('2d');
+        const actChart = new Chart(ctxAct, {
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(actions), 
+                datasets: [{ data: [0,0,0,0], backgroundColor: '#38bdf8' }] 
+            },
+            options: { 
+                indexAxis: 'y', 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { display: false } } 
+            }
+        });
+
+        // Zone 5: Model AUC Trend Line Chart
+        const ctxAuc = document.getElementById('aucTrend').getContext('2d');
+        new Chart(ctxAuc, {
+            type: 'line', 
+            data: { 
+                labels: ['Retrain 1', 'Retrain 2', 'Current'], 
+                datasets: [{ 
+                    data: [0.91, 0.93, 0.95], 
+                    borderColor: '#10b981', 
+                    fill: true, 
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)', 
+                    tension: 0.4 
+                }] 
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
+
+        // ==========================================
+        // System State Variables & Live Feed Logic
+        // ==========================================
+        let simInterval = null;
+        let totalRequests = 0;
+        let ragCount = 0;
+        let uncertainCount = 0;
+        let humanQueue = 0;
+
+        // Initialize Retrain Timestamp
+        document.getElementById('z1-retrain').textContent = new Date().toLocaleTimeString();
+
+        // Toggle Live Transaction Feed
+        function toggleSimulation() {
+            const btn = document.getElementById('sim-btn');
+            
+            if (simInterval) {
+                // Stop Simulation
+                clearInterval(simInterval); 
+                simInterval = null;
+                btn.textContent = "Start Live Feed"; 
+                btn.classList.replace("bg-red-600", "bg-blue-600");
+            } else {
+                // Start Simulation
+                fetchData(); // Fetch immediately once
+                simInterval = setInterval(fetchData, 4000); // Then fetch every 4 seconds
+                btn.textContent = "Stop System"; 
+                btn.classList.replace("bg-blue-600", "bg-red-600");
+            }
+        }
+
+        // Fetch Prediction from FastAPI Backend
+        async function fetchData() {
+            const t0 = performance.now();
+            
+            // Generate synthetic regular transaction
+            const features = [ 
+                Math.random() * 5000 + 10,  // Amount
+                (Math.random() * 4) - 1,    // Latitude
+                Math.random(),              // Longitude
+                Math.random() * 5,          // Population
+                Math.random()               // Time
+            ];
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ features: features }) 
+                });
+                
+                const data = await response.json();
+                const t1 = performance.now();
+                
+                updateUI(data, t1 - t0);
+            } catch (error) { 
+                console.error("API Connection Error:", error); 
+            }
+        }
+
+        // ==========================================
+        // UI Dashboard Update Logic
+        // ==========================================
+        function updateUI(data, latency) {
+            totalRequests++;
+            const score = data.intelligent_score;
+            const cos = data.signals.SHAP_cosine;
+            
+            // --- Update Zone 1: Retraining Status ---
+            const driftEl = document.getElementById('z1-drift');
+            const jobEl = document.getElementById('z6-job');
+            
+            if (data.system_status === "RETRAINING") {
+                driftEl.textContent = "HARD (Retraining...)";
+                driftEl.className = "metric-value text-red-500 animate-pulse";
+                jobEl.textContent = "RUNNING";
+                jobEl.className = "metric-value text-yellow-400";
+            } else {
+                driftEl.textContent = "STABLE";
+                driftEl.className = "metric-value text-emerald-400";
+                jobEl.textContent = "DONE";
+                jobEl.className = "metric-value text-emerald-400";
+            }
+
+            // --- Update Zone 2: Scoring Histogram & RAG ---
+            document.getElementById('z2-score').textContent = score.toFixed(4);
+            
+            if (score < 0.10) bands.low++; 
+            else if (score <= 0.35) bands.mid++; 
+            else bands.high++;
+            
+            histChart.data.datasets[0].data = [bands.low, bands.mid, bands.high];
+            histChart.update();
+            
+            const pLow = ((bands.low / totalRequests) * 100).toFixed(0);
+            const pMid = ((bands.mid / totalRequests) * 100).toFixed(0);
+            const pHigh = ((bands.high / totalRequests) * 100).toFixed(0);
+            document.getElementById('z2-bands').textContent = `<0.10: ${pLow}% | 0.10-0.35: ${pMid}% | >0.35: ${pHigh}%`;
+
+            if (data.reasoning && data.reasoning.includes("RAG")) ragCount++;
+            document.getElementById('z2-rag').textContent = ((ragCount / totalRequests) * 100).toFixed(1) + "%";
+
+            // --- Update Zone 3: Action Dispatch ---
+            if (data.action === "BLOCK_CARD") actions.BLOCK++;
+            else if (data.action === "APPROVE") actions.APPROVE++;
+            else if (data.action === "HUMAN_REVIEW") { 
+                actions.REVIEW++; 
+                humanQueue++; 
+            } else {
+                actions.OTP++;
+            }
+            
+            actChart.data.datasets[0].data = Object.values(actions);
+            actChart.update();
+            
+            document.getElementById('z3-queue').textContent = `${humanQueue} pending`;
+            
+            const autoRate = ((totalRequests - actions.REVIEW) / totalRequests * 100).toFixed(1);
+            document.getElementById('z3-auto').textContent = `${autoRate}% Auto`;
+
+            // --- Update Zone 4: SHAP Reliability ---
+            document.getElementById('z4-cos').textContent = cos.toFixed(3);
+            if (cos < 0.85) uncertainCount++;
+            
+            document.getElementById('z4-uncertain').textContent = ((uncertainCount / totalRequests) * 100).toFixed(1) + "%";
+
+            // --- Update Zone 5 & 6: System Metrics ---
+            document.getElementById('z5-rag-size').textContent = (10000 + totalRequests).toLocaleString() + " vectors";
+            document.getElementById('z6-latency').textContent = latency.toFixed(0) + " ms";
+            document.getElementById('z6-shap-queue').textContent = Math.floor(Math.random() * 3) + " items";
+            
+            const alertEl = document.getElementById('z6-alert');
+            if (data.system_status === "RETRAINING") {
+                alertEl.textContent = "⚠️ Centroid + Gap Decline";
+                alertEl.className = "metric-value text-red-500";
+            } else {
+                alertEl.textContent = "None";
+                alertEl.className = "metric-value text-emerald-400";
+            }
+        }
+
+        // ==========================================
+        // Security Testing: Manual Fraud Injection
+        // ==========================================
+        async function injectFraudAttack() {
+            // High-risk synthetic payload designed to trigger BLOCK_CARD and Retraining
+            const fraudPayload = [ 88888.0, 89.0, -170.0, 10, Date.now() / 1000 ];
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ features: fraudPayload })
+                });
+                
+                const data = await response.json();
+                updateUI(data, 45); // Force immediate UI update with synthetic latency
+                
+            } catch (error) { 
+                console.error("Fraud Injection Failed:", error); 
+            }
+        }
+    </script>
+</body>
+</html>
