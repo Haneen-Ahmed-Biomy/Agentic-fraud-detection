@@ -1,4 +1,4 @@
-# 🛡️ Agentic Framework for Intelligent Fraud Detection and Operational Risk Monitoring
+#  Agentic Framework for Intelligent Fraud Detection and Operational Risk Monitoring
 
 This repository contains the implementation of the AI-driven framework proposed in the paper **Agentic_Fraud_Detection_Paper.pdf**. The system is designed to identify suspicious financial transactions, provide explainable decisions, dispatch real-time alerts, and execute autonomous model maintenance.
 
@@ -11,7 +11,7 @@ Unlike static, rule-based engines, this architecture evaluates transactions usin
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
 * **Multi-Signal Risk Aggregation:** Computes an intelligent fraud score by combining transaction amount severity, SVM confidence gaps, Fuzzy C-Means (FCM) cluster membership, temporal multipliers, and SHAP cosine reliability
 * **Explainable AI (XAI) & Local Reasoning:** Uses SHAP values to identify dominant suspicious features and routes them to a locally deployed Ollama model (`qwen2.5:1.5b`) to generate natural-language explanations without relying on external cloud APIs
@@ -22,7 +22,7 @@ Unlike static, rule-based engines, this architecture evaluates transactions usin
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 The project is highly modular and organized into four decoupled layers
 
@@ -42,7 +42,7 @@ The project is highly modular and organized into four decoupled layers
 
 ---
 
-## 📂 Dataset & Model Artifacts
+##  Dataset & Model Artifacts
 
 ### Data Requirements
 To run the offline training pipeline (`offline_training.py`), you must provide a historical transaction dataset named **`train.csv`** in the root project directory
@@ -62,7 +62,7 @@ Upon successful training, the pipeline exports the following binary objects to t
 
 ---
 
-## 📊 Feature Comparison Matrix
+## Feature Comparison Matrix
 As detailed in **Agentic_Fraud_Detection_Paper.pdf**, this framework bridges the gap between pure black-box classification and rigid rule engines
 | Feature / Capability | Proposed Agentic System | Rule-Based Engines | Standalone SVM / RF | Deep Learning Black-Box |
 | :--- | :---: | :---: | :---: | :---: |
